@@ -105,19 +105,30 @@ https://javascript.plainenglish.io/lets-build-a-video-chat-app-with-javascript-a
 #### 영균이와 지원이를 예로 들어보자
 
 1. 메타 데이터 교환
+   ![image](https://user-images.githubusercontent.com/29361570/154531434-c9170e0e-6a79-4fd2-be3f-16276494476d.png)
+
+   > :warning: 동기적으로 작동하는 것 처럼 설명하지만, 각 과정이 모두 동기적으로 작동하지는 않는다. 플로우만 생각하자.
 
    1. **영균**이는 `RTCPeerConnection` 객체를 생성한다.
-   1. **영균**이는 `RTCPeerConnection`의 `createOffer()`메서드를 이용해 offer (SDP session description)를 생성한다.
+   1. **영균**이는 `RTCPeerConnection`의 `createOffer()`메서드를 이용해 offer (SDP session description)를 생성한다.[^createoffer]
+      [^createoffer]:`2022.02.18 추가`:
+      원문에서는 offer를 따로 stringify 한다고 했지만, 아마 이제는 따로 처리해주지 않아도 되는듯 함.
+      `createOffer()`는 `Promise<RTCSessionDescription>` 타입을 반환하고, `RTCSessionDescription`는 충분히 잘 serialize되어있기 때문인 것 같음. `createAnswer()`의 경우도 마찬가지.
+      https://developer.mozilla.org/ko/docs/Web/API/RTCPeerConnection/setLocalDescription
    1. **영균**이는 생성될 connection의 local media의 description으로 위의 offer를 설정하기 위해 `setLocalDescription()`을 호출한다.
-   1. **영균**이는 시그널링 매커니즘을 이용하여 stringify된 offer를 **지원**이에게 보낸다.
+   1. **영균**이는 시그널링 매커니즘을 이용[^usesignalingmechanism]하여 stringify된 offer를 **지원**이에게 보낸다.
+      [^usesignalingmechanism]: 어떤 방식으로든 전달하기만 하면 된다는 뜻.
+      시그널링 방식에 대한 세부 구현은 webrtc 표준에 포함되어있지 않음.
    1. **지원**이는 **영균**이의 offer와 함께 `setRemoteDescription()`을 호출하여 `RTCPeerConnection`객체가 **영균**이의 정보를 알 수 있게 한다.
-   1. **지원**이는 `createAnswer()`를 호출하고, 성공 콜백은 local session description(= **지원**이의 answer)으로 전달된다.(여긴 이해가 잘 안됨. 코드를 봐야 알 수 있을 듯. 원문: `Bernadette calls createAnswer() and the success callback function for this is passed a local session description—Bernadette's answer.`)
+   1. **지원**이는 `createAnswer()`를 호출하고, 성공 콜백은 local session description(= **지원**이의 answer)으로 전달된다.(여긴 이해가 잘 안됨. 코드를 봐야 알 수 있을 듯. 원문: `Bernadette calls createAnswer() and the success callback function for this is passed a local session description—Bernadette's answer.`)[^createanswercallback]
+      [^createanswercallback]:`2022.02.18 추가`:
+      원문의 설명은 Promise 메서드가 지원되기 전 콜백 형식의 메서드를 기준으로 설명한 듯 함. 우린 그냥 평소에 promise 쓰는 것 처럼 하면됨
    1. **지원**이는 `setLocalDescription()`을 호출하여 answer를 local description으로 설정한다.
-   1. **지원**이는 stringify된 answer를 시그널링 매커니즘을 이용해 **영균**이에게 전달한다.
+   1. **지원**이는 stringify된 answer[^createoffer]를 시그널링 매커니즘을 이용해[^usesignalingmechanism] **영균**이에게 전달한다.
    1. **영균**이는 **지원**이의 answer를 `setRemoteDescription()`을 이용하여 remote session description으로 설정한다.
 
 1. **finding candidates**: ICE framework를 이용하여 **network interfaces and ports** 찾기
-   1. **영균**이는 `onicecandidate`핸들러와 함꼐 `RTCPeerConnection` 객체를 만든다.
+   1. **영균**이는 `onicecandidate`핸들러와 함께 `RTCPeerConnection` 객체를 만든다.
    1. 핸들러는 network candidates이 <U>활성화될 때(아마 내부적으로 이벤트가 dispatch 되었을 때)</U> 호출된다.
    1. 핸들러 내에서, **영균**이는 시그널링 채널을 통해 stringified candidate data를 **지원**이에게 보낸다.
    1. **영균**이한테 온 candidate 메시지를 받으면, **지원**이는 remote peer description에 candidate을 추가하기 위해 `addIceCandidate()`을 호출한다.
@@ -179,3 +190,5 @@ RTCPeerConnection(pcConfig);
 ```
 
 ![final](https://miro.medium.com/max/1400/1*OyKvaHYQDvGHfK53RE2IOg.png)
+
+[^createoffer]:
