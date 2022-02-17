@@ -9,7 +9,7 @@
 
 ---
 
-다음 글의 내용을 정리한 것
+다음 글의 내용을 정리하고 보충한 것.
 
 https://javascript.plainenglish.io/lets-build-a-video-chat-app-with-javascript-and-webrtc-de745072c38c
 
